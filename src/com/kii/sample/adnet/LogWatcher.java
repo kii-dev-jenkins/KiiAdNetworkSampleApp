@@ -26,7 +26,7 @@ public class LogWatcher implements Runnable {
     private static final Pattern networkPattern = Pattern.compile("nid=\"(.*)\" name=\"(.*)\"");
     private static final Pattern pingPattern = Pattern.compile("\\?nid=(.*)&type");
     
-    private boolean runnable = false;
+    private volatile boolean runnable = false;
     private Handler handler;
     private Runtime runtime = Runtime.getRuntime();
     private Process proc;
@@ -52,8 +52,6 @@ public class LogWatcher implements Runnable {
         } catch (IOException e) {
             Log.e(TAG, "failed to clear locat", e);
         }
-        // wait 10 second
-        handler.postDelayed(this, 10000); 
     }
     
     public void stop() {
@@ -61,22 +59,27 @@ public class LogWatcher implements Runnable {
     }
     @Override
     public void run() {
-        try {
-            proc = runtime.exec("logcat -d");
-            InputStream is = proc.getInputStream();
-            List<String> lines = readLines(is);
-            runtime.exec("logcat -c");
-            readLog(lines);
-            // update UI
-            handler.post(new ShowRunnable(impressionTextRef.get(), impression, clickTextRef.get(), click, tableRef.get(), networks));
+        while (runnable) {
+            try {
+                proc = runtime.exec("logcat -d");
+                InputStream is = proc.getInputStream();
+                List<String> lines = readLines(is);
+                runtime.exec("logcat -c");
+                readLog(lines);
+                // update UI
+                handler.post(new ShowRunnable(impressionTextRef.get(), impression, clickTextRef.get(), click, tableRef.get(), networks));
             
-            Log.d(TAG, "Impression:" + impression);
-            Log.d(TAG, "Click:" + click);
-        } catch (IOException e) {
-            Log.e(TAG, "failed to get locat", e);
-        }
-        if (runnable) {
-            handler.postDelayed(this, 3000);
+                Log.d(TAG, "Impression:" + impression);
+                Log.d(TAG, "Click:" + click);
+            } catch (IOException e) {
+                Log.e(TAG, "failed to get locat", e);
+            }
+            
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                Log.e(TAG, "interrupted ", e);
+            }
         }
     }
     
@@ -156,6 +159,8 @@ public class LogWatcher implements Runnable {
         private WeakReference<TableLayout> tableRef;
         private Map<String, NetworkInfo> networks;
         
+        private List<TableRow> rows = new ArrayList<TableRow>();
+        
         public ShowRunnable(TextView impressionText, int impressionCount, 
                 TextView clickText, int clickCount,
                 TableLayout table, Map<String, NetworkInfo> networks) {
@@ -165,6 +170,52 @@ public class LogWatcher implements Runnable {
             this.clickCount = clickCount;
             this.tableRef = new WeakReference<TableLayout>(table);
             this.networks = networks;
+            
+            createRows();
+        }
+        private void createRows() {
+            TableLayout table = tableRef.get();
+            if (table == null) return;
+            
+            Context context = table.getContext();
+            rows.clear();
+            // set header
+            TableRow headerRow = new TableRow(context);
+            
+            TextView text = new TextView(context);
+            text.setText("Name");
+            headerRow.addView(text);
+            
+            text = new TextView(context);
+            text.setText("Impression");
+            headerRow.addView(text);
+            
+            text = new TextView(context);
+            text.setText("Click");
+            headerRow.addView(text);
+            
+            rows.add(headerRow);
+            
+            Set<String> keys = networks.keySet();
+            for (String key : keys) {
+                NetworkInfo networkInfo = networks.get(key);
+                TableRow row = new TableRow(context);
+                rows.add(row);
+                
+                text = new TextView(context);
+                text.setText(networkInfo.getName());
+                row.addView(text);
+                
+                text = new TextView(context);
+                text.setGravity(Gravity.RIGHT);
+                text.setText(String.valueOf(networkInfo.getImpression()));
+                row.addView(text);
+                
+                text = new TextView(context);
+                text.setGravity(Gravity.RIGHT);
+                text.setText(String.valueOf(networkInfo.getClick()));
+                row.addView(text);
+            }
         }
         @Override
         public void run() {
@@ -184,43 +235,9 @@ public class LogWatcher implements Runnable {
         
         private void updateTable(TableLayout table) {
             table.removeAllViews();
-            Context context = table.getContext();
 
-            // set header
-            TableRow headerRow = new TableRow(context);
-            table.addView(headerRow);
-            
-            TextView text = new TextView(context);
-            text.setText("Name");
-            headerRow.addView(text);
-            
-            text = new TextView(context);
-            text.setText("Impression");
-            headerRow.addView(text);
-            
-            text = new TextView(context);
-            text.setText("Click");
-            headerRow.addView(text);
-            
-            Set<String> keys = networks.keySet();
-            for (String key : keys) {
-                NetworkInfo networkInfo = networks.get(key);
-                TableRow row = new TableRow(context);
-                table.addView(row);
-                
-                text = new TextView(context);
-                text.setText(networkInfo.getName());
-                row.addView(text);
-                
-                text = new TextView(context);
-                text.setGravity(Gravity.RIGHT);
-                text.setText(String.valueOf(networkInfo.getImpression()));
-                row.addView(text);
-                
-                text = new TextView(context);
-                text.setGravity(Gravity.RIGHT);
-                text.setText(String.valueOf(networkInfo.getClick()));
-                row.addView(text);
+            for (TableRow r : rows) {
+                table.addView(r);
             }
         }
     }

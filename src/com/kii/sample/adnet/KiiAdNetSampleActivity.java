@@ -128,6 +128,8 @@ public class KiiAdNetSampleActivity extends Activity {
         // log watcher
         logWatcher = new LogWatcher(handler, impressionText, clickText, table);
         logWatcher.start();
+        Thread th = new Thread(logWatcher);
+        th.start();
     }
 
     @Override
