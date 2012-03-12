@@ -14,6 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Handler;
 import android.util.Log;
 import android.view.Gravity;
@@ -30,18 +31,14 @@ public class LogWatcher implements Runnable {
     private Handler handler;
     private Runtime runtime = Runtime.getRuntime();
     private Process proc;
-    private WeakReference<TextView> impressionTextRef;
-    private WeakReference<TextView> clickTextRef;
     private WeakReference<TableLayout> tableRef;
     
     private int impression = 0;
     private int click = 0;
     private Map<String, NetworkInfo> networks = new TreeMap<String, NetworkInfo>();
     
-    public LogWatcher(Handler handler, TextView impressionText, TextView clickText, TableLayout table) {
+    public LogWatcher(Handler handler, TableLayout table) {
         this.handler = handler;
-        this.impressionTextRef = new WeakReference<TextView>(impressionText);
-        this.clickTextRef = new WeakReference<TextView>(clickText);
         this.tableRef = new WeakReference<TableLayout>(table);
     }
     
@@ -67,7 +64,7 @@ public class LogWatcher implements Runnable {
                 runtime.exec("logcat -c");
                 readLog(lines);
                 // update UI
-                handler.post(new ShowRunnable(impressionTextRef.get(), impression, clickTextRef.get(), click, tableRef.get(), networks));
+                handler.post(new ShowRunnable(impression, click, tableRef.get(), networks));
             
                 Log.d(TAG, "Impression:" + impression);
                 Log.d(TAG, "Click:" + click);
@@ -152,21 +149,17 @@ public class LogWatcher implements Runnable {
     }
 
 	private static class ShowRunnable implements Runnable {
-        private WeakReference<TextView> impressionRef;
         private int impressionCount;
-        private WeakReference<TextView> clickRef;
         private int clickCount;
         private WeakReference<TableLayout> tableRef;
         private Map<String, NetworkInfo> networks;
         
         private List<TableRow> rows = new ArrayList<TableRow>();
         
-        public ShowRunnable(TextView impressionText, int impressionCount, 
-                TextView clickText, int clickCount,
+        public ShowRunnable(int impressionCount, 
+                int clickCount,
                 TableLayout table, Map<String, NetworkInfo> networks) {
-            this.impressionRef = new WeakReference<TextView>(impressionText);
             this.impressionCount = impressionCount;
-            this.clickRef = new WeakReference<TextView>(clickText);
             this.clickCount = clickCount;
             this.tableRef = new WeakReference<TableLayout>(table);
             this.networks = networks;
@@ -181,18 +174,28 @@ public class LogWatcher implements Runnable {
             rows.clear();
             // set header
             TableRow headerRow = new TableRow(context);
+            TableRow.LayoutParams rowParams = new TableRow.LayoutParams(
+                    TableRow.LayoutParams.WRAP_CONTENT,
+                    TableRow.LayoutParams.WRAP_CONTENT);
+            rowParams.setMargins(4, 0, 4, 0); // 4px
             
             TextView text = new TextView(context);
             text.setText("Name");
-            headerRow.addView(text);
+            text.setTextColor(Color.BLACK);
+            text.setBackgroundColor(Color.GRAY);
+            headerRow.addView(text, rowParams);
             
             text = new TextView(context);
             text.setText("Impression");
-            headerRow.addView(text);
+            text.setTextColor(Color.BLACK);
+            text.setBackgroundColor(Color.GRAY);
+            headerRow.addView(text, rowParams);
             
             text = new TextView(context);
             text.setText("Click");
-            headerRow.addView(text);
+            text.setTextColor(Color.BLACK);
+            text.setBackgroundColor(Color.GRAY);
+            headerRow.addView(text, rowParams);
             
             rows.add(headerRow);
             
@@ -216,17 +219,26 @@ public class LogWatcher implements Runnable {
                 text.setText(String.valueOf(networkInfo.getClick()));
                 row.addView(text);
             }
+            // add total line
+            TableRow row = new TableRow(context);
+            rows.add(row);
+            
+            text = new TextView(context);
+            text.setText("Total");
+            row.addView(text);
+            
+            text = new TextView(context);
+            text.setGravity(Gravity.RIGHT);
+            text.setText(String.valueOf(impressionCount));
+            row.addView(text);
+            
+            text = new TextView(context);
+            text.setGravity(Gravity.RIGHT);
+            text.setText(String.valueOf(clickCount));
+            row.addView(text);
         }
         @Override
         public void run() {
-            TextView text = impressionRef.get();
-            if (text != null) {
-                text.setText("Impressions:" + impressionCount);
-            }
-            text = clickRef.get();
-            if (text != null) {
-                text.setText(" Clicks:" + clickCount);
-            }
             TableLayout table = tableRef.get();
             if (table != null) {
                 updateTable(table);

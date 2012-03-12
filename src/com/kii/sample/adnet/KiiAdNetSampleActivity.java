@@ -78,26 +78,6 @@ public class KiiAdNetSampleActivity extends Activity {
         layout.addView(text);
         text.setText("Your country:" + Locale.getDefault().getCountry());
 
-        LinearLayout countLayout = new LinearLayout(this);
-        countLayout.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout.LayoutParams countLayoutParam = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.FILL_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        layout.addView(countLayout, countLayoutParam);
-        
-        TextView impressionText = new TextView(this);
-        impressionText.setText("Impressions:0");
-        countLayoutParam = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        countLayoutParam.weight = 1;
-        countLayout.addView(impressionText, countLayoutParam);
-        
-
-        TextView clickText = new TextView(this);
-        clickText.setText("Clicks:0");
-        countLayout.addView(clickText, countLayoutParam);
-
         Button b = new Button(this);
         b.setText("Setting");
         b.setOnClickListener(new View.OnClickListener() {
@@ -126,7 +106,7 @@ public class KiiAdNetSampleActivity extends Activity {
         setContentView(layout);
 
         // log watcher
-        logWatcher = new LogWatcher(handler, impressionText, clickText, table);
+        logWatcher = new LogWatcher(handler, table);
         logWatcher.start();
         Thread th = new Thread(logWatcher);
         th.start();
