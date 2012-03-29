@@ -1,0 +1,121 @@
+/*
+ Copyright 2012 Kii, Inc.
+ 
+    Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+ 
+  http://www.apache.org/licenses/LICENSE-2.0
+ 
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+*/
+
+Quick Start:
+
+1. Add the following permissions to AndroidManifest.xml
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+2. Add KiiAdNetSDK_Android_1.0.0.jar to classpath. 
+
+2-1. If you want to use AdMob, 
+2-1-1. Add GoogleAdMobAdsSdk-4.3.1.jar to classpath
+2-1-2. Add the following permissions to AndroidManifest.xml. AdMob SDK requires these permissions.
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+2-1-3. Change target version to Android 3.2 or more(AdMob SDK requires this)
+2-1-4. Add the following activity info to AndroidManifest.xml
+
+    <activity android:name="com.google.ads.AdActivity"
+        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"/>
+
+2-2. If you want to use MdotM,
+2-2-1. Add mdotm-sdk-android.jar to classpath.
+
+2-3. If you want to use SmartMad, 
+2-3-1. Add smartmad-sdk-android.jar to classpath.
+2-3-2. Add the following permissions to AndroidManifest.xml. SmartMad SDK requires these permissions.
+
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
+2-4. If you want to use Millennial Media,
+2-4-1. Add MMAdView.jar to classpath.
+2-4-2. Add the following permissions to AndroidManifest.xml. Millennial Media SDK requires these permissions.
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+2-4-3. Add the following activity info to AndroidManifest.xml
+
+    <activity android:name="com.millennialmedia.android.MMAdViewOverlayActivity" 
+        android:theme="@android:style/Theme.Translucent.NoTitleBar"
+        android:configChanges="keyboardHidden|orientation|keyboard" />
+    <activity android:name="com.millennialmedia.android.VideoPlayer" 
+        android:configChanges="keyboardHidden|orientation|keyboard" />
+
+2-5. If you want to use InMobi,
+2-5-1. Add InMobiAndroidSDK.jar to classpath.
+2-5-2. Add the following activity info to AndroidManifest.xml
+    <activity android:name="com.inmobi.androidsdk.IMBrowserActivity"
+        android:configChanges="keyboardHidden|orientation|keyboard" />
+
+3. Create an com.kii.ad.KiiAdNetLayout. Make sure that this code is called in the main thread.
+
+    // get scaledDensity
+    Display display = getWindowManager().getDefaultDisplay();
+    DisplayMetrics metrics = new DisplayMetrics();
+    display.getMetrics(metrics);
+    float scaledDensity = metrics.scaledDensity;
+
+    // set targeting parameter
+    KiiAdNetTargeting.setGender(KiiAdNetTargeting.Gender.FEMALE);
+    KiiAdNetTargeting.setKeywords("Application");
+    KiiAdNetTargeting.setAge(35);
+    KiiAdNetTargeting.setPostalCode("30900");
+ 
+    // create an KiiAdnetLayout
+    KiiAdNetLayout adLayout = new KiiAdNetLayout(this, APP_ID, APP_KEY);
+    layout.addView(adLayout);
+    adLayout.setMaxWidth((int)(scaledDensity * 320));
+    adLayout.setMaxHeight((int)(scaledDensity * 52));
+
+  You can choose whatever size you want for the layout.
+  We suggest 320(dip)x52(dip), as this is the largest ad unit size.
+  If you choose to make the view smaller, ads will still display,
+  but may cut off a few pixels and display a small scroll bar.
+  
+  When you create KiiAdNetLayout instance, it tries to get network info from server. 
+  Info is cached then if cached info is not expired, KiiAdNetLayout does not send 
+  request to server.
+  Default expire time is 30 minutes. If you want to change this time for debug, please add 
+  the following code before you create KiiAdNetLayout instance.
+  
+  
+
+How to configure Ad-net setting:
+
+1. Let's go to our dev portal (https://ewok-production.herokuapp.com/)
+
+2. Log in and select your app.
+
+3. Click "Ad" on the left link.
+  You can see the current number of impressions and clicks
+
+4. Click "Config" tab.
+
+5. Check "Enable Ad", then setting form appears.
+
+6. Click "Add network" button to add new network settings to Default setting.
+
+7. For example, choose AdMob and enter AdMob publisher ID. You can get this ID from AdMob.
+
+8. It works after 1-2 minutes!
+
+
+
